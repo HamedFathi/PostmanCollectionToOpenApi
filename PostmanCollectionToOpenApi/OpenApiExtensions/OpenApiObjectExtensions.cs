@@ -1,12 +1,12 @@
 ﻿namespace PostmanCollectionToOpenApi.OpenApiExtensions;
 
-internal static class OpenApiObjectExtensions
+public static class OpenApiObjectExtensions
 {
-    public static OpenApiObject ToOpenApiObject(this JToken jToken, Dictionary<string, string>? variables)
+    public static OpenApiObject ToOpenApiObject(this JToken jToken, Dictionary<string, string>? variables = null)
     {
         variables ??= new Dictionary<string, string>();
         var openApiObject = new OpenApiObject();
-        foreach (var jsonDetail in jToken.GetJTokenDetails())
+        foreach (var jsonDetail in jToken.GetJTokenDetails().Where(x => !x.IsObjectOrArray))
         {
             openApiObject = openApiObject.OpenApiObjectMaker(jsonDetail.Path, jsonDetail.JTokenString.ToExample(variables));
         }

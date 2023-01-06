@@ -1,9 +1,10 @@
 ﻿namespace PostmanCollectionToOpenApi.Common;
 
-internal static class JsonExtensions
+public static class JsonExtensions
 {
-    internal static IList<JTokenDetail> GetJTokenDetails(this JToken jToken)
+    public static IList<JTokenDetail> GetJTokenDetails(this JToken jToken, Dictionary<string, string>? variables = null)
     {
+        variables ??= new Dictionary<string, string>();
         var fields = new List<JTokenDetail>();
         var queue = new Queue<JToken>();
         queue.Enqueue(jToken);
@@ -19,24 +20,24 @@ internal static class JsonExtensions
             var parentKey = path.Length <= 1
                 ? string.Empty
                 : path.Take(path.Length - 1).Select(x => x.RemoveArrayIndex()).Aggregate((a, b) => a + "." + b);
+            var tokenString = currentToken.ToString();
+            var value = currentToken.ToObject<object>();
+            var isArrayOrObject = currentToken.Type is JTokenType.Array or JTokenType.Object;
             switch (currentToken.Type)
             {
                 // If the token is a JObject, push its properties onto the stack
                 case JTokenType.Object:
-                    var valueObject = currentToken.ToObject<object>();
                     fields
                         .Add(new JTokenDetail
                         {
                             SharedKey = key,
                             SharedParentKey = parentKey,
                             Path = path,
-                            Value = valueObject,
+                            Value = value,
                             JToken = currentToken,
-                            JTokenString = currentToken.ToString(),
+                            JTokenString = tokenString,
                             JTokenType = currentToken.Type,
-                            //OpenApiValueType = valueObject.ConvertToOpenApiValueType(),
-                            //OpenApiAny = currentToken.ToString().ToExample2(dictionary),
-                            IsObjectOrArray = currentToken.Type is JTokenType.Array or JTokenType.Object,
+                            IsObjectOrArray = isArrayOrObject,
                             Parents = parent,
                             LastPathItem = last
                         });
@@ -48,20 +49,17 @@ internal static class JsonExtensions
                     break;
                 // If the token is an array, push its elements onto the stack
                 case JTokenType.Array:
-                    var valueArray = currentToken.ToObject<object>();
                     fields
                         .Add(new JTokenDetail
                         {
                             SharedKey = key,
                             SharedParentKey = parentKey,
                             Path = path,
-                            Value = valueArray,
+                            Value = value,
                             JToken = currentToken,
                             JTokenType = currentToken.Type,
                             JTokenString = currentToken.ToString(),
-                            //OpenApiValueType = valueArray.ConvertToOpenApiValueType(),
-                            //OpenApiAny = currentToken.ToString().ToExample2(dictionary),
-                            IsObjectOrArray = currentToken.Type is JTokenType.Array or JTokenType.Object,
+                            IsObjectOrArray = isArrayOrObject,
                             Parents = parent,
                             LastPathItem = last
                         });
@@ -73,7 +71,6 @@ internal static class JsonExtensions
                     break;
                 // Otherwise, the token is a leaf node, so add its name and value to the list
                 default:
-                    var value = currentToken.ToObject<object>();
                     fields
                         .Add(new JTokenDetail
                         {
@@ -84,9 +81,7 @@ internal static class JsonExtensions
                             JToken = currentToken,
                             JTokenType = currentToken.Type,
                             JTokenString = currentToken.ToString(),
-                            //OpenApiValueType = value.ConvertToOpenApiValueType(),
-                            //OpenApiAny = currentToken.ToString().ToExample2(dictionary),
-                            IsObjectOrArray = currentToken.Type is JTokenType.Array or JTokenType.Object,
+                            IsObjectOrArray = isArrayOrObject,
                             Parents = parent,
                             LastPathItem = last
                         });

@@ -1,8 +1,8 @@
 ﻿namespace PostmanCollectionToOpenApi.OpenApiExtensions;
 
-internal static class OpenApiAnyExtensions
+public static class OpenApiAnyExtensions
 {
-    public static IOpenApiAny ToExample(this string value, Dictionary<string, string>? variables)
+    public static IOpenApiAny ToExample(this string value, Dictionary<string, string>? variables = null)
     {
         variables ??= new Dictionary<string, string>();
         value = value.ReplaceVariables(variables);

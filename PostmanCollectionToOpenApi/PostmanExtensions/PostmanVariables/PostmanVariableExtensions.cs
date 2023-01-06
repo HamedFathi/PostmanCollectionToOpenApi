@@ -1,8 +1,8 @@
 ﻿namespace PostmanCollectionToOpenApi.PostmanExtensions.PostmanVariables;
 
-public static class PostmanVariableExtensions
+internal static class PostmanVariableExtensions
 {
-    public static Dictionary<string, string> MergeVariables(this IEnumerable<PostmanVariable>? variables, IEnumerable<PostmanEnvironmentVariable>? values)
+    internal static Dictionary<string, string> MergeVariables(this IEnumerable<PostmanVariable>? variables, IEnumerable<PostmanEnvironmentVariable>? values)
     {
         var result = new Dictionary<string, string>();
 

@@ -1,8 +1,20 @@
 ﻿namespace PostmanCollectionToOpenApi.OpenApiExtensions
 {
-    internal static class OpenApiSchemaExtensions
+    public static class OpenApiSchemaExtensions
     {
-        internal static OpenApiSchema ToOpenApiSchema(this string jsObjectOrArrayString, Dictionary<string, string>? variables = null)
+        public static OpenApiSchema ConvertToOpenApiSchema(this OpenApiValueType openApiValueType, string value, Dictionary<string, string>? variables = null)
+        {
+            variables ??= new Dictionary<string, string>();
+            var (type, format) = openApiValueType.GetTypeAndFormat();
+            return new OpenApiSchema()
+            {
+                Example = value.ToExample(variables),
+                Type = type,
+                Format = format
+            };
+        }
+
+        public static OpenApiSchema ToOpenApiSchema(this string jsObjectOrArrayString, Dictionary<string, string>? variables = null)
         {
             variables ??= new Dictionary<string, string>();
             var isArray = jsObjectOrArrayString.IsArrayText();
@@ -22,7 +34,7 @@
             return isArray ? schema.Properties.First().Value : schema;
         }
 
-        internal static OpenApiSchema ToOpenApiSchema(this JToken jToken, Dictionary<string, string>? variables = null)
+        public static OpenApiSchema ToOpenApiSchema(this JToken jToken, Dictionary<string, string>? variables = null)
         {
             variables ??= new Dictionary<string, string>();
             var schema = new OpenApiSchema
@@ -39,19 +51,8 @@
             return schema;
         }
 
-        private static OpenApiSchema ConvertToOpenApiSchema(this OpenApiValueType openApiValueType, string value, Dictionary<string, string>? variables = null)
-        {
-            var (type, format) = openApiValueType.GetTypeAndFormat();
-            return new OpenApiSchema()
-            {
-                Example = value.ToExample(variables),
-                Type = type,
-                Format = format
-            };
-        }
-
         private static OpenApiSchema OpenApiSchemaMaker(this OpenApiSchema openApiSchema, JTokenDetail jTokenDetail,
-            IList<JTokenDetail> jTokenDetails, Dictionary<string, string>? variables)
+            IList<JTokenDetail> jTokenDetails, Dictionary<string, string>? variables = null)
         {
             variables ??= new Dictionary<string, string>();
             var currentSchema = openApiSchema;

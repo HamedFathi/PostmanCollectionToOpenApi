@@ -1,14 +1,14 @@
 ﻿namespace PostmanCollectionToOpenApi.OpenApiExtensions;
 
-internal static class OpenApiArrayExtensions
+public static class OpenApiArrayExtensions
 {
     private static readonly Regex ArrayIndexRegex = new(@"\[(.*)\]", RegexOptions.Singleline);
 
-    internal static OpenApiArray ToOpenApiArray(this string value, Dictionary<string, string>? variables)
+    public static OpenApiArray ToOpenApiArray(this string value, Dictionary<string, string>? variables = null)
     {
         if (value == null) throw new ArgumentNullException(nameof(value));
-        if (variables == null) throw new ArgumentNullException(nameof(variables));
 
+        variables ??= new Dictionary<string, string>();
         value = value.ReplaceVariables(variables);
         var openApiValueType = value.ToOpenApiValueType();
         if (openApiValueType != OpenApiValueType.Array)

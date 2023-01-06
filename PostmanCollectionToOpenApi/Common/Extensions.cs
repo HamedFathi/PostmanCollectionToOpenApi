@@ -53,7 +53,7 @@ internal static class Extensions
             return false;
 
         var txt = text.Trim().RemoveAllWhiteSpaces().Trim().Trim(',').Trim(';');
-        var result = txt.StartsWith("{\"") && txt.EndsWith("\"}") && txt.Contains("\":\"");
+        var result = txt.StartsWith("{\"") && txt.EndsWith("}") && txt.Contains("\":\"");
         return result;
     }
 
@@ -73,7 +73,9 @@ internal static class Extensions
 
     internal static string RemoveAllWhiteSpaces(this string text)
     {
-        return string.IsNullOrEmpty(text) ? text : Regex.Replace(text, " ", string.Empty).Trim();
+        return string.IsNullOrEmpty(text) ? text : Regex.Replace(text, " ", string.Empty)
+            .Replace("\n", string.Empty).Replace("\r", string.Empty)
+            .Trim();
     }
 
     internal static string RemoveArrayIndex(this string str)
