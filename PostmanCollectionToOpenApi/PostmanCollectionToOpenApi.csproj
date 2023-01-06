@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<Authors>Hamed Fathi</Authors>
+		<Company />
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<Version>0.0.1</Version>
+		<PackageProjectUrl>https://github.com/HamedFathi/PostmanCollectionToOpenApi</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/HamedFathi/PostmanCollectionToOpenApi</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="PostmanCollectionReader" Version="1.6.0" />
+		<PackageReference Include="Microsoft.OpenApi.Readers" Version="1.4.5" />
+		<PackageReference Include="Microsoft.OpenApi" Version="1.4.5" />
+	</ItemGroup>
+
+</Project>
