@@ -8,6 +8,22 @@ public static class PostmanItemsExtensions
     {
         if (postmanItems == null) throw new ArgumentNullException(nameof(postmanItems));
         var result = new List<OpenApiParameter>();
+        var cookies = postmanItems.Request?.RequestClass.Header?.HeaderArray
+            .Where(x => string.Equals(x.Key, "cookie", StringComparison.OrdinalIgnoreCase) && x.Disabled != true);
+        if (cookies != null)
+        {
+            foreach (var cookie in cookies)
+            {
+                result.Add(new OpenApiParameter
+                {
+                    In = ParameterLocation.Cookie,
+                    Name = cookie.Key,
+                    Description = cookie.Description?.String,
+                    Example = cookie.Value.ToExample(variables),
+                    Schema = cookie.Value.ToOpenApiSchema(variables)
+                });
+            }
+        }
 
         var queries = postmanItems.Request?.RequestClass.Url?.UrlClass.Query;
         if (queries != null)
@@ -15,7 +31,7 @@ public static class PostmanItemsExtensions
             foreach (var query in queries)
             {
                 if (query.Disabled == true) continue;
-                result.Add(new OpenApiParameter()
+                result.Add(new OpenApiParameter
                 {
                     In = ParameterLocation.Query,
                     Name = query.Key,
@@ -26,6 +42,26 @@ public static class PostmanItemsExtensions
             }
         }
 
+        var headers = postmanItems.Request?.RequestClass.Header?.HeaderArray
+            .Where(x => !string.Equals(x.Key, "cookie", StringComparison.OrdinalIgnoreCase) && x.Disabled != true);
+        if (headers != null)
+        {
+            foreach (var header in headers)
+            {
+                result.Add(new OpenApiParameter
+                {
+                    In = ParameterLocation.Header,
+                    Name = header.Key,
+                    Description = header.Description?.String,
+                    Example = header.Value.ToExample(variables),
+                    Schema = header.Value.ToOpenApiSchema(variables)
+                });
+            }
+        }
+
+        // ParameterLocation.Path
+        // Query string?
+
         return result;
     }
 
@@ -34,20 +70,11 @@ public static class PostmanItemsExtensions
         if (postmanItems == null) throw new ArgumentNullException(nameof(postmanItems));
         if (postmanItems.Request == null) throw new ArgumentNullException(nameof(postmanItems));
 
-        var rawValue = postmanItems.Request?.RequestClass.Body?.Raw;
-        if (rawValue != null)
-        {
-            var schema = rawValue.ToOpenApiSchema(variables);
-            var example = rawValue.ToExample(variables);
-        }
-
-        var result = new OpenApiRequestBody
+        return new OpenApiRequestBody
         {
             Description = postmanItems.Request?.RequestClass.Description?.String,
-            Content = postmanItems.Request?.RequestClass.Body?.ToContent()
+            Content = postmanItems.Request?.RequestClass.ToContent(variables)
         };
-
-        return result;
     }
 
     public static OpenApiResponses GetOpenApiResponses(this PostmanItems postmanItems, Dictionary<string, string>? variables)

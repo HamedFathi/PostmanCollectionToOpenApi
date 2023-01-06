@@ -1,5 +1,7 @@
-﻿using System.Net;
+﻿using System.ComponentModel;
+using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace PostmanCollectionToOpenApi.Common;
 
@@ -32,6 +34,20 @@ internal static class Extensions
                 foreach (var child in children)
                     stack.Push(child);
         }
+    }
+
+    internal static string? GetDescription(this Enum @enum, bool returnEnumNameInsteadOfNull = false)
+    {
+        if (@enum == null) throw new ArgumentNullException(nameof(@enum));
+
+        return
+            @enum
+                .GetType()
+                .GetMember(@enum.ToString())
+                .FirstOrDefault()
+                ?.GetCustomAttribute<DescriptionAttribute>()
+                ?.Description
+            ?? (!returnEnumNameInsteadOfNull ? null : @enum.ToString());
     }
 
     internal static string GetHostWithScheme(this string uriText)
