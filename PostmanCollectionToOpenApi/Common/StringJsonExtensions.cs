@@ -2,7 +2,7 @@
 
 internal static class StringJsonExtensions
 {
-    internal static readonly Regex JsonKeyRegex = new("(.+):", RegexOptions.Singleline);
+    private static readonly Regex JsonKeyRegex = new("(.+):", RegexOptions.Singleline);
 
     internal static string ConvertJavascriptObjectOrArrayToJson(this string jsObjectOrArrayString, string rootNameOfArray = "Root", bool formatted = false)
     {
@@ -46,6 +46,19 @@ internal static class StringJsonExtensions
             return jsObjectOrArrayString;
         }
         return jsObjectOrArrayString;
+    }
+
+    internal static (string name, int index) GetPathDetail(this string path)
+    {
+        var status = path.Contains("[") && path.EndsWith("]");
+        if (!status)
+            return (path, -1);
+
+        var startIndex = path.LastIndexOf('[');
+        var indexer = path.Substring(startIndex);
+        var name = path.Replace(indexer, string.Empty);
+        var index = Convert.ToInt32(indexer.Trim('[').Trim(']'));
+        return (name, index);
     }
 
     internal static string[] SplitPath(this string path)

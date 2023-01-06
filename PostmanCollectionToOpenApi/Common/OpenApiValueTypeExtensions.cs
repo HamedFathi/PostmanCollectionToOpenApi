@@ -2,6 +2,11 @@
 
 internal static class OpenApiValueTypeExtensions
 {
+    internal static OpenApiValueType ConvertToOpenApiValueType(this object? value)
+    {
+        return value == null ? OpenApiValueType.Null : value.ToString()!.ToOpenApiValueType();
+    }
+
     internal static (string? type, string? format) GetTypeAndFormat(this OpenApiValueType openApiValueType)
     {
         return openApiValueType switch

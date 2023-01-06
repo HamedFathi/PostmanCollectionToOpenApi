@@ -1,4 +1,4 @@
-﻿namespace PostmanCollectionToOpenApi.PostmanVariables;
+﻿namespace PostmanCollectionToOpenApi.PostmanExtensions.PostmanVariables;
 
 public static class PostmanVariableExtensions
 {

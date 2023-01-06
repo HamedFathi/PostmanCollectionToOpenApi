@@ -2,71 +2,7 @@
 
 internal static class JsonExtensions
 {
-    internal static bool IsPrimitive(this JTokenType type)
-    {
-        switch (type)
-        {
-            case JTokenType.Boolean:
-            case JTokenType.Date:
-            case JTokenType.Float:
-            case JTokenType.Guid:
-            case JTokenType.Integer:
-            case JTokenType.String:
-            case JTokenType.TimeSpan:
-            case JTokenType.Undefined:
-            case JTokenType.Null:
-            case JTokenType.Uri:
-                return true;
-
-            default:
-                return false;
-        }
-    }
-
-    internal static IOpenApiAny? ToOpenApiAny(this JTokenType jTokenType, object? value)
-    {
-        switch (jTokenType)
-        {
-            case JTokenType.Integer:
-                return new OpenApiLong(Convert.ToInt64(value));
-
-            case JTokenType.Float:
-                return new OpenApiDouble(Convert.ToDouble(value));
-
-            case JTokenType.Boolean:
-                return new OpenApiBoolean(Convert.ToBoolean(value));
-
-            case JTokenType.Null:
-                return new OpenApiNull();
-
-            case JTokenType.Date:
-                return new OpenApiDate(Convert.ToDateTime(value));
-
-            case JTokenType.TimeSpan:
-                return new OpenApiDateTime(Convert.ToDateTime(value));
-
-            case JTokenType.None:
-            case JTokenType.Object:
-            case JTokenType.Array:
-            case JTokenType.Constructor:
-            case JTokenType.Property:
-            case JTokenType.Comment:
-            case JTokenType.Bytes:
-            case JTokenType.Undefined:
-                return null;
-
-            case JTokenType.Raw:
-            case JTokenType.Guid:
-            case JTokenType.String:
-            case JTokenType.Uri:
-                return new OpenApiString(Convert.ToString(value));
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    private static IList<JTokenDetail> GetJTokenDetails(this JToken jToken)
+    internal static IList<JTokenDetail> GetJTokenDetails(this JToken jToken)
     {
         var fields = new List<JTokenDetail>();
         var queue = new Queue<JToken>();
@@ -159,5 +95,69 @@ internal static class JsonExtensions
         }
 
         return fields;
+    }
+
+    internal static bool IsPrimitive(this JTokenType type)
+    {
+        switch (type)
+        {
+            case JTokenType.Boolean:
+            case JTokenType.Date:
+            case JTokenType.Float:
+            case JTokenType.Guid:
+            case JTokenType.Integer:
+            case JTokenType.String:
+            case JTokenType.TimeSpan:
+            case JTokenType.Undefined:
+            case JTokenType.Null:
+            case JTokenType.Uri:
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    internal static IOpenApiAny? ToOpenApiAny(this JTokenType jTokenType, object? value)
+    {
+        switch (jTokenType)
+        {
+            case JTokenType.Integer:
+                return new OpenApiLong(Convert.ToInt64(value));
+
+            case JTokenType.Float:
+                return new OpenApiDouble(Convert.ToDouble(value));
+
+            case JTokenType.Boolean:
+                return new OpenApiBoolean(Convert.ToBoolean(value));
+
+            case JTokenType.Null:
+                return new OpenApiNull();
+
+            case JTokenType.Date:
+                return new OpenApiDate(Convert.ToDateTime(value));
+
+            case JTokenType.TimeSpan:
+                return new OpenApiDateTime(Convert.ToDateTime(value));
+
+            case JTokenType.None:
+            case JTokenType.Object:
+            case JTokenType.Array:
+            case JTokenType.Constructor:
+            case JTokenType.Property:
+            case JTokenType.Comment:
+            case JTokenType.Bytes:
+            case JTokenType.Undefined:
+                return null;
+
+            case JTokenType.Raw:
+            case JTokenType.Guid:
+            case JTokenType.String:
+            case JTokenType.Uri:
+                return new OpenApiString(Convert.ToString(value));
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 }

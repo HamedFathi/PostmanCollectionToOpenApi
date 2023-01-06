@@ -4,9 +4,8 @@ namespace PostmanCollectionToOpenApi.Common;
 
 internal static class Extensions
 {
-    internal static readonly Regex ArrayIndexRegex = new(@"\[(.*)\]", RegexOptions.Singleline);
-    internal static readonly Regex EmailRegex = new Regex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$", RegexOptions.Compiled);
-    internal static readonly Regex UriRegex = new Regex(@"^\w+:(\/?\/?)[^\s]+$", RegexOptions.Compiled);
+    private static readonly Regex EmailRegex = new Regex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$", RegexOptions.Compiled);
+    private static readonly Regex UriRegex = new Regex(@"^\w+:(\/?\/?)[^\s]+$", RegexOptions.Compiled);
 
     internal static T CastTo<T>(this object o) => (T)o;
 
