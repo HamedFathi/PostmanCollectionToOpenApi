@@ -16,6 +16,30 @@ internal static class Extensions
         return source.Where(element => seenKeys.Add(keySelector(element)));
     }
 
+    internal static IEnumerable<T> FlattenByStack<T>(this IEnumerable<T> items, Func<T, IEnumerable<T>?>? getChildren)
+    {
+        var stack = new Stack<T>();
+        foreach (var item in items)
+            stack.Push(item);
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            yield return current;
+
+            var children = getChildren?.Invoke(current);
+            if (children != null)
+                foreach (var child in children)
+                    stack.Push(child);
+        }
+    }
+
+    internal static string GetHostWithScheme(this string uriText)
+    {
+        var uri = new Uri(uriText);
+        return uri.Scheme + Uri.SchemeDelimiter + uri.Host;
+    }
+
     internal static bool IsArrayText(this string text)
     {
         if (string.IsNullOrWhiteSpace(text))
