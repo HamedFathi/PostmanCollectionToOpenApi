@@ -2,7 +2,7 @@
 
 internal static class StringJsonExtensions
 {
-    private static readonly Regex JsonKeyRegex = new("(.+):", RegexOptions.Singleline);
+    private static readonly Regex JsonKeyRegex = new(@"([^""'\s].+[^""'\s])\s*:", RegexOptions.Singleline);
 
     internal static string ConvertJavascriptObjectOrArrayToJson(this string jsObjectOrArrayString, string rootNameOfArray = "Root", bool formatted = false)
     {
@@ -13,8 +13,8 @@ internal static class StringJsonExtensions
         }
         var value = jsObjectOrArrayString.Trim().Trim(';').Trim(',').Trim('=');
         var text = value.RemoveAllWhiteSpaces().Trim();
-        var isArray = text.StartsWith("[") && text.EndsWith("]");
-        var isObject = text.StartsWith("{") && text.EndsWith("}");
+        var isArray = text.IsArrayText();
+        var isObject = text.IsJsonText();
 
         var matches = JsonKeyRegex.Matches(jsObjectOrArrayString);
         if (matches.Count == 0)

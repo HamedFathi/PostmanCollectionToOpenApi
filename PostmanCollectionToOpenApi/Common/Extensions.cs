@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Sockets;
 
 namespace PostmanCollectionToOpenApi.Common;
 
@@ -31,7 +32,7 @@ internal static class Extensions
 
         return address.AddressFamily switch
         {
-            System.Net.Sockets.AddressFamily.InterNetwork => true,
+            AddressFamily.InterNetwork => true,
             _ => false
         };
     }
@@ -42,7 +43,7 @@ internal static class Extensions
 
         return address.AddressFamily switch
         {
-            System.Net.Sockets.AddressFamily.InterNetworkV6 => true,
+            AddressFamily.InterNetworkV6 => true,
             _ => false
         };
     }

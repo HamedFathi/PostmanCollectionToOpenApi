@@ -6,7 +6,7 @@
         {
             variables ??= new Dictionary<string, string>();
             var (type, format) = openApiValueType.GetTypeAndFormat();
-            return new OpenApiSchema()
+            return new OpenApiSchema
             {
                 Example = value.ToExample(variables),
                 Type = type,
@@ -46,13 +46,33 @@
             var filteredJsonDetails = jsonDetails.Where(x => !x.IsObjectOrArray).ToList();
             foreach (var jsonDetail in filteredJsonDetails)
             {
-                schema = schema.OpenApiSchemaMaker(jsonDetail, jsonDetails, variables);
+                schema = schema.OpenApiSchemaMaker(jsonDetail, jsonDetails, jToken, variables);
             }
             return schema;
         }
 
+        private static string? GetParentJsonString(JTokenDetail jTokenDetail, JToken jToken)
+        {
+            string? parentText = null;
+            if (jTokenDetail.Path.Length > 1 && jToken is JObject obj)
+            {
+                var key = jTokenDetail.Path.Take(jTokenDetail.Path.Length - 1)
+                    .Aggregate((a, b) => $"{a}.{b}").RemoveArrayIndex();
+                parentText = obj.SelectToken(key)?.ToString();
+            }
+
+            if (jTokenDetail.Path.Length > 1 && jToken is JArray arr)
+            {
+                var key = jTokenDetail.Path.Take(jTokenDetail.Path.Length - 1)
+                    .Aggregate((a, b) => $"{a}.{b}").RemoveArrayIndex();
+                parentText = arr.SelectToken(key)?.ToString();
+            }
+
+            return parentText;
+        }
+
         private static OpenApiSchema OpenApiSchemaMaker(this OpenApiSchema openApiSchema, JTokenDetail jTokenDetail,
-            IList<JTokenDetail> jTokenDetails, Dictionary<string, string>? variables = null)
+            IList<JTokenDetail> jTokenDetails, JToken jToken, Dictionary<string, string>? variables = null)
         {
             variables ??= new Dictionary<string, string>();
             var currentSchema = openApiSchema;
@@ -75,12 +95,16 @@
                         // Array does not exist and we should create it first.
                         if (!currentSchema.Properties.ContainsKey(name))
                         {
-                            var jTokenDetailArray = jTokenDetails.First(x =>
-                                x.SharedKey == jTokenDetail.SharedKey && !x.IsObjectOrArray);
+                            var exampleItems = jTokenDetails.Where(x =>
+                                x.SharedKey == jTokenDetail.SharedKey && !x.IsObjectOrArray)
+                                .Select(x => x.JTokenString.ToExample(variables))
+                                .ToList();
+                            var example = new OpenApiArray();
+                            example.AddRange(exampleItems);
                             var arraySchema = new OpenApiSchema
                             {
                                 Type = "array",
-                                Example = jTokenDetailArray.JTokenString.ToExample(variables),
+                                Example = example,
                                 Items = new OpenApiSchema
                                 {
                                     Type = type,
@@ -102,14 +126,13 @@
                     {
                         if (!currentSchema.Properties.ContainsKey(name))
                         {
-                            var jTokenDetailObject = jTokenDetails.First(x =>
-                                x.SharedKey == jTokenDetail.SharedKey && !x.IsObjectOrArray);
+                            var example = jTokenDetail.JTokenString.ToExample(variables);
                             // The place you add the final primitive value.
                             currentSchema.Properties.Add(name, new OpenApiSchema
                             {
                                 Type = type,
                                 Format = format,
-                                Example = jTokenDetailObject.JTokenString.ToExample(variables),
+                                Example = example,
                                 Nullable = isNullable
                             });
                         }
@@ -118,20 +141,18 @@
                 // Parent
                 else
                 {
-                    //var parentText = GetParentJsonString(jsonDetail, jToken);
-
+                    var parentText = GetParentJsonString(jTokenDetail, jToken);
                     // Parent is an array
                     if (isArray)
                     {
+                        var example = parentText!.ToExample(variables);
                         // Parent does not exist
                         if (!currentSchema.Properties.ContainsKey(name))
                         {
-                            var jTokenDetailArray = jTokenDetails.First(x =>
-                                x.SharedKey == jTokenDetail.SharedParentKey && x.JTokenType == JTokenType.Array);
                             var arraySchema = new OpenApiSchema
                             {
                                 Type = "array",
-                                Example = jTokenDetailArray.JTokenString.ToExample(variables)
+                                Example = example
                             };
                             currentSchema.Properties.Add(name, arraySchema);
                             currentSchema = currentSchema.Properties[name].Items =
@@ -149,12 +170,12 @@
                         // Object does not exist. we need to create it first.
                         if (!currentSchema.Properties.Keys.Contains(name))
                         {
-                            var jTokenDetailObject = jTokenDetails.First(x =>
-                                x.SharedKey == jTokenDetail.SharedParentKey && x.JTokenType == JTokenType.Object);
                             var objectSchema = new OpenApiSchema
                             {
                                 Type = "object",
-                                Example = jTokenDetailObject.JTokenString.ToExample(variables)
+                                Example = string.IsNullOrEmpty(parentText)
+                                    ? null
+                                    : JToken.Parse(parentText!).ToOpenApiObject()
                             };
                             currentSchema.Properties.Add(name, objectSchema);
                             currentSchema = objectSchema;
