@@ -4,14 +4,19 @@ namespace PostmanCollectionToOpenApi.PostmanExtensions;
 
 public static class PostmanCollectionExtensions
 {
-    public static IList<PostmanItems> FlattenItem(this PostmanCollection postmanCollection)
+    public static IList<PostmanItems>? FlattenItem(this PostmanCollection postmanCollection)
     {
         if (postmanCollection == null) throw new ArgumentNullException(nameof(postmanCollection));
 
-        var result = postmanCollection.Item.FlattenByStack(x => x.Item)
-                .Where(x => x.Request != null || x.Response != null)
-            ;
-        return result.ToList();
+        if (postmanCollection.Item != null)
+        {
+            var result = postmanCollection.Item.FlattenByStack(x => x.Item)
+                    .Where(x => x.Request != null || x.Response != null)
+                ;
+            return result.ToList();
+        }
+
+        return null;
     }
 
     public static Dictionary<string, IList<PostmanItems>> FlattenItemWithParents(this PostmanCollection postmanCollection, string noParentSymbol = "$", string separator = " > ")
@@ -29,9 +34,10 @@ public static class PostmanCollectionExtensions
         var parentsCounter = new Stack<int>();
 
         var items = postmanCollection.Item;
-        items.Reverse();
-        foreach (var item in items)
-            stack.Push(item);
+        items?.Reverse();
+        if (items != null)
+            foreach (var item in items)
+                stack.Push(item);
 
         while (stack.Count > 0)
         {
@@ -40,7 +46,7 @@ public static class PostmanCollectionExtensions
             // Parent
             if (current.Response == null && current.Request == null)
             {
-                parents.Push(current.Name);
+                if (current.Name != null) parents.Push(current.Name);
             }
 
             // Child
@@ -91,15 +97,20 @@ public static class PostmanCollectionExtensions
         return result;
     }
 
-    public static IList<PostmanAuth?> FlattenRequestAuth(this PostmanCollection postmanCollection)
+    public static IList<PostmanAuth?>? FlattenRequestAuth(this PostmanCollection postmanCollection)
     {
         if (postmanCollection == null) throw new ArgumentNullException(nameof(postmanCollection));
 
-        var result = postmanCollection.Item.FlattenByStack(x => x.Item)
-                .Where(x => x.Request?.RequestClass.Auth != null)
-                .Select(x => x.Request?.RequestClass.Auth)
-            ;
-        return result.ToList();
+        if (postmanCollection.Item != null)
+        {
+            var result = postmanCollection.Item.FlattenByStack(x => x.Item)
+                    .Where(x => x.Request?.RequestClass?.Auth != null)
+                    .Select(x => x.Request?.RequestClass?.Auth)
+                ;
+            return result.ToList();
+        }
+
+        return null;
     }
 
     public static IList<string> GetTags(this PostmanCollection postmanCollection, string noParentSymbol = "$", string separator = " > ")
@@ -109,17 +120,18 @@ public static class PostmanCollectionExtensions
             .Select(x => x.Key).OrderBy(x => x).ToList();
     }
 
-    public static OpenApiDocument ToOpenApiDocument(this string postmanCollectionJson, PostmanToOpenApiSettings? settings = null)
+    public static OpenApiDocument? ToOpenApiDocument(this string postmanCollectionJson, PostmanToOpenApiSettings? settings = null)
     {
         if (string.IsNullOrWhiteSpace(postmanCollectionJson))
         {
             throw new ArgumentException($"'{nameof(postmanCollectionJson)}' cannot be null or whitespace.", nameof(postmanCollectionJson));
         }
         var postmanCollection = PostmanCollection.FromJson(postmanCollectionJson);
-        return postmanCollection.ToOpenApiDocument(settings);
+        if (postmanCollection != null) return postmanCollection.ToOpenApiDocument(settings);
+        return null;
     }
 
-    public static OpenApiDocument ToOpenApiDocument(this PostmanCollection postmanCollection, PostmanToOpenApiSettings? settings = null)
+    public static OpenApiDocument? ToOpenApiDocument(this PostmanCollection postmanCollection, PostmanToOpenApiSettings? settings = null)
     {
         if (postmanCollection is null)
         {
@@ -127,29 +139,34 @@ public static class PostmanCollectionExtensions
         }
         settings ??= new PostmanToOpenApiSettings();
 
-        var openApiDocument = new OpenApiDocument
+        if (postmanCollection.Info != null)
         {
-            Info = postmanCollection.Info.ToOpenApiInfo(settings),
-            Servers = postmanCollection.ToOpenApiServers(settings),
-            Tags = postmanCollection.ToOpenApiTags(),
-            Paths = postmanCollection.ToOpenApiPaths(settings)
-        };
-
-        var mainAuth = postmanCollection.Auth;
-        if (mainAuth != null)
-        {
-            openApiDocument.SecurityRequirements = mainAuth.ToOpenApiSecurityRequirements();
-        }
-        var auth = GetOpenApiSecuritySchemes(postmanCollection);
-        if (auth.Count > 0)
-        {
-            openApiDocument.Components = new OpenApiComponents
+            var openApiDocument = new OpenApiDocument
             {
-                SecuritySchemes = auth.ToDictionary(x => $"{x.Scheme.ToLower()}Auth", y => y)
+                Info = postmanCollection.Info.ToOpenApiInfo(settings),
+                Servers = postmanCollection.ToOpenApiServers(settings),
+                Tags = postmanCollection.ToOpenApiTags(),
+                Paths = postmanCollection.ToOpenApiPaths(settings)
             };
+
+            var mainAuth = postmanCollection.Auth;
+            if (mainAuth != null)
+            {
+                openApiDocument.SecurityRequirements = mainAuth.ToOpenApiSecurityRequirements();
+            }
+            var auth = GetOpenApiSecuritySchemes(postmanCollection);
+            if (auth.Count > 0)
+            {
+                openApiDocument.Components = new OpenApiComponents
+                {
+                    SecuritySchemes = auth.ToDictionary(x => $"{x.Scheme.ToLower()}Auth", y => y)
+                };
+            }
+
+            return openApiDocument;
         }
 
-        return openApiDocument;
+        return null;
     }
 
     public static OpenApiPaths ToOpenApiPaths(this PostmanCollection postmanCollection, PostmanToOpenApiSettings settings)
@@ -167,7 +184,7 @@ public static class PostmanCollectionExtensions
             foreach (var pk in data.Value.GetRequestPathKeys(variables))
             {
                 var key = pk.Key;
-                var items = pk.Value.DistinctBy(x => x.Request?.RequestClass.Method);
+                var items = pk.Value.DistinctBy(x => x.Request?.RequestClass?.Method);
 
                 var openApiPathItem = new OpenApiPathItem
                 {
@@ -177,17 +194,20 @@ public static class PostmanCollectionExtensions
                 foreach (var op in items)
                 {
                     if (op.Request == null) continue;
-                    var opType = op.Request.Value.RequestClass.Method.GetOperationType();
-                    openApiPathItem.Operations.Add(opType, new OpenApiOperation
+                    if (op.Request.Value.RequestClass is { Method: { } })
                     {
-                        Description = op.Description?.String,
-                        Summary = op.Name,
-                        RequestBody = op.GetOpenApiRequestBody(variables),
-                        Parameters = op.GetOpenApiParameters(variables),
-                        Responses = op.GetOpenApiResponses(variables),
-                        Security = op.Request?.RequestClass.Auth?.ToOpenApiSecurityRequirements(),
-                        Tags = tags
-                    });
+                        var opType = op.Request.Value.RequestClass.Method.GetOperationType();
+                        openApiPathItem.Operations.Add(opType, new OpenApiOperation
+                        {
+                            Description = op.Description?.String,
+                            Summary = op.Name,
+                            RequestBody = op.GetOpenApiRequestBody(variables),
+                            Parameters = op.GetOpenApiParameters(variables),
+                            Responses = op.GetOpenApiResponses(variables),
+                            Security = op.Request?.RequestClass.Auth?.ToOpenApiSecurityRequirements(),
+                            Tags = tags
+                        });
+                    }
                 }
 
                 if (result.ContainsKey(key))
@@ -219,28 +239,36 @@ public static class PostmanCollectionExtensions
         var result = new List<OpenApiServer>();
         var uniqueUrls = new HashSet<string>();
 
-        var requestUrls = items
-                .Select(x => x.Request.GetRawUrl()?.ReplaceVariables(variables))
-            ;
-
-        var responseUrls = items
-                .SelectMany(x => x.Response)
-                .Select(y => y.GetRawUrl()?.ReplaceVariables(variables))
-            ;
-
-        var list = requestUrls.Concat(responseUrls);
-        foreach (var item in list)
+        if (items != null)
         {
-            if (item != null && !string.IsNullOrWhiteSpace(item))
-            {
-                var uri = item.GetHostWithScheme();
-                var isUnique = uniqueUrls.Add(uri);
-                if (isUnique)
-                {
-                    result.Add(new OpenApiServer
+            var requestUrls = items
+                    .Select(x => x.Request.GetRawUrl()?.ReplaceVariables(variables))
+                ;
+
+            var responseUrls = items
+                    .SelectMany(x =>
                     {
-                        Url = uri
-                    });
+                        if (x.Response != null) return x.Response;
+                        return Enumerable.Empty<PostmanResponse>();
+                    })
+                    .Select(y => y.GetRawUrl()?.ReplaceVariables(variables))
+                    .Where(z => z != null).ToList()
+                    ;
+
+            var list = requestUrls.Concat(responseUrls);
+            foreach (var item in list)
+            {
+                if (item != null && !string.IsNullOrWhiteSpace(item))
+                {
+                    var uri = item.GetHostWithScheme();
+                    var isUnique = uniqueUrls.Add(uri);
+                    if (isUnique)
+                    {
+                        result.Add(new OpenApiServer
+                        {
+                            Url = uri
+                        });
+                    }
                 }
             }
         }
@@ -274,18 +302,21 @@ public static class PostmanCollectionExtensions
             auth.Add(postmanCollection.Auth.ToOpenApiSecurityScheme());
         }
 
-        foreach (var reqAuth in postmanCollection.FlattenRequestAuth())
+        var list = postmanCollection.FlattenRequestAuth();
+        if (list != null)
         {
-            if (reqAuth != null)
+            foreach (var reqAuth in list)
             {
-                var scheme = reqAuth.ToOpenApiSecurityScheme();
-                if (auth.All(x => x.Scheme != scheme.Scheme))
+                if (reqAuth != null)
                 {
-                    auth.Add(scheme);
+                    var scheme = reqAuth.ToOpenApiSecurityScheme();
+                    if (auth.All(x => x.Scheme != scheme.Scheme))
+                    {
+                        auth.Add(scheme);
+                    }
                 }
             }
         }
-
         return auth;
     }
 

@@ -24,24 +24,26 @@ public static class PostmanRequestClassExtensions
     private static IDictionary<string, OpenApiMediaType> ConvertRaw(this PostmanRequestClass requestClass, Dictionary<string, string>? variables)
     {
         var result = new Dictionary<string, OpenApiMediaType>();
-        if (requestClass.Body.Raw == null) return result;
 
-        var raw = requestClass.Body.Raw.ReplaceVariables(variables);
-        var schema = raw.ToOpenApiSchema(variables);
-        var example = raw.ToExample(variables);
+        var raw = requestClass.Body?.Raw?.ReplaceVariables(variables);
+        var schema = raw?.ToOpenApiSchema(variables);
+        var example = raw?.ToExample(variables);
 
-        var contentType = requestClass.Header?.HeaderArray
-                .FirstOrDefault(x => string.Equals(x.Key, "content-type", StringComparison.OrdinalIgnoreCase) && x.Disabled != true)
-                ?.Value
-            ;
-
-        contentType ??= "application/json";
-
-        result.Add(contentType, new OpenApiMediaType
+        if (requestClass.Header?.HeaderArray != null)
         {
-            Schema = schema,
-            Example = example
-        });
+            var contentType = requestClass.Header?.HeaderArray
+                    .FirstOrDefault(x => string.Equals(x.Key, "content-type", StringComparison.OrdinalIgnoreCase) && x.Disabled != true)
+                    ?.Value
+                ;
+
+            contentType ??= "application/json";
+
+            result.Add(contentType, new OpenApiMediaType
+            {
+                Schema = schema,
+                Example = example
+            });
+        }
 
         return result;
     }
@@ -49,24 +51,27 @@ public static class PostmanRequestClassExtensions
     private static IDictionary<string, OpenApiMediaType> ConvertUrlEncoded(this PostmanRequestClass requestClass, Dictionary<string, string>? variables)
     {
         var result = new Dictionary<string, OpenApiMediaType>();
-        if (requestClass.Body.Urlencoded == null) return result;
 
-        var jsonText = requestClass.Body.Urlencoded.ToJsonString(variables);
-        var schema = jsonText.ToOpenApiSchema(variables);
-        var example = jsonText.ToExample(variables);
+        var jsonText = requestClass.Body?.Urlencoded?.ToJsonString(variables);
+        var schema = jsonText?.ToOpenApiSchema(variables);
+        var example = jsonText?.ToExample(variables);
 
-        var contentType = requestClass.Header?.HeaderArray
-            .FirstOrDefault(x => string.Equals(x.Key, "content-type", StringComparison.OrdinalIgnoreCase) && x.Disabled != true)
-            ?.Value
-            ;
-
-        contentType ??= "application/x-www-form-urlencoded";
-
-        result.Add(contentType, new OpenApiMediaType
+        if (requestClass.Header?.HeaderArray != null)
         {
-            Schema = schema,
-            Example = example
-        });
+            var contentType = requestClass.Header?.HeaderArray?
+                    .FirstOrDefault(x => string.Equals(x.Key, "content-type", StringComparison.OrdinalIgnoreCase) && x.Disabled != true)
+                    ?.Value
+                ;
+
+            contentType ??= "application/x-www-form-urlencoded";
+
+            result.Add(contentType, new OpenApiMediaType
+            {
+                Schema = schema,
+                Example = example
+            });
+        }
+
         return result;
     }
 
@@ -74,7 +79,7 @@ public static class PostmanRequestClassExtensions
     {
         variables ??= new Dictionary<string, string>();
         var dictionary = encodedParameters.Where(x => x.Disabled != true)
-            .ToDictionary(x => x.Key, y => y.Value.ReplaceVariables(variables));
+            .ToDictionary(x => x.Key, y => y.Value?.ReplaceVariables(variables));
         return JsonConvert.SerializeObject(dictionary);
     }
 }

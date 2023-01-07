@@ -10,7 +10,7 @@ internal static class PostmanVariableExtensions
         {
             foreach (var vv in values)
             {
-                if (!string.IsNullOrWhiteSpace(vv.Key) && vv.Enabled)
+                if (!string.IsNullOrWhiteSpace(vv.Key) && vv.Enabled == true)
                 {
                     result.Add(vv.Key.GetPostmanVariable(), vv.Value);
                 }
@@ -21,12 +21,12 @@ internal static class PostmanVariableExtensions
         {
             foreach (var variable in variables)
             {
-                if (!string.IsNullOrWhiteSpace(variable.Key) && variable.Disabled != true)
+                if (variable is { Value: { } } && !string.IsNullOrWhiteSpace(variable.Key) && variable.Disabled != true)
                 {
                     var key = variable.Key.GetPostmanVariable();
                     if (!result.ContainsKey(key))
                     {
-                        result.Add(key, variable.Value.ToString());
+                        result.Add(key, variable.Value?.ToString()!);
                     }
                 }
             }

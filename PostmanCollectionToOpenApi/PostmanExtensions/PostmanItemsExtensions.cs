@@ -1,4 +1,6 @@
-﻿using PostmanCollectionToOpenApi.OpenApiExtensions;
+﻿#nullable enable
+
+using PostmanCollectionToOpenApi.OpenApiExtensions;
 
 namespace PostmanCollectionToOpenApi.PostmanExtensions;
 
@@ -8,24 +10,27 @@ public static class PostmanItemsExtensions
     {
         if (postmanItems == null) throw new ArgumentNullException(nameof(postmanItems));
         var result = new List<OpenApiParameter>();
-        var cookies = postmanItems.Request?.RequestClass.Header?.HeaderArray
-            .Where(x => string.Equals(x.Key, "cookie", StringComparison.OrdinalIgnoreCase) && x.Disabled != true);
-        if (cookies != null)
+        if (postmanItems.Request?.RequestClass?.Header?.HeaderArray != null)
         {
-            foreach (var cookie in cookies)
+            var cookies = postmanItems.Request?.RequestClass?.Header?.HeaderArray?
+                .Where(x => string.Equals(x.Key, "cookie", StringComparison.OrdinalIgnoreCase) && x.Disabled != true);
+            if (cookies != null)
             {
-                result.Add(new OpenApiParameter
+                foreach (var cookie in cookies)
                 {
-                    In = ParameterLocation.Cookie,
-                    Name = cookie.Key,
-                    Description = cookie.Description?.String,
-                    Example = cookie.Value.ToExample(variables),
-                    Schema = cookie.Value.ToOpenApiSchema(variables)
-                });
+                    result.Add(new OpenApiParameter
+                    {
+                        In = ParameterLocation.Cookie,
+                        Name = cookie.Key,
+                        Description = cookie.Description?.String,
+                        Example = cookie.Value?.ToExample(variables),
+                        Schema = cookie.Value?.ToOpenApiSchema(variables)
+                    });
+                }
             }
         }
 
-        var queries = postmanItems.Request?.RequestClass.Url?.UrlClass.Query;
+        var queries = postmanItems.Request?.RequestClass?.Url?.UrlClass?.Query;
         if (queries != null)
         {
             foreach (var query in queries)
@@ -36,26 +41,29 @@ public static class PostmanItemsExtensions
                     In = ParameterLocation.Query,
                     Name = query.Key,
                     Description = query.Description?.String,
-                    Example = query.Value.ToExample(variables),
-                    Schema = query.Value.ToOpenApiSchema(variables)
+                    Example = query.Value?.ToExample(variables),
+                    Schema = query.Value?.ToOpenApiSchema(variables)
                 });
             }
         }
 
-        var headers = postmanItems.Request?.RequestClass.Header?.HeaderArray
-            .Where(x => !string.Equals(x.Key, "cookie", StringComparison.OrdinalIgnoreCase) && x.Disabled != true);
-        if (headers != null)
+        if (postmanItems.Request?.RequestClass?.Header?.HeaderArray != null)
         {
-            foreach (var header in headers)
+            var headers = postmanItems.Request?.RequestClass?.Header?.HeaderArray?
+                .Where(x => !string.Equals(x.Key, "cookie", StringComparison.OrdinalIgnoreCase) && x.Disabled != true);
+            if (headers != null)
             {
-                result.Add(new OpenApiParameter
+                foreach (var header in headers)
                 {
-                    In = ParameterLocation.Header,
-                    Name = header.Key,
-                    Description = header.Description?.String,
-                    Example = header.Value.ToExample(variables),
-                    Schema = header.Value.ToOpenApiSchema(variables)
-                });
+                    result.Add(new OpenApiParameter
+                    {
+                        In = ParameterLocation.Header,
+                        Name = header.Key,
+                        Description = header.Description?.String,
+                        Example = header.Value?.ToExample(variables),
+                        Schema = header.Value?.ToOpenApiSchema(variables)
+                    });
+                }
             }
         }
 
@@ -72,8 +80,8 @@ public static class PostmanItemsExtensions
 
         return new OpenApiRequestBody
         {
-            Description = postmanItems.Request?.RequestClass.Description?.String,
-            Content = postmanItems.Request?.RequestClass.ToContent(variables)
+            Description = postmanItems.Request?.RequestClass?.Description?.String,
+            Content = postmanItems.Request?.RequestClass?.ToContent(variables)
         };
     }
 

@@ -12,12 +12,6 @@ internal static class Extensions
 
     internal static T CastTo<T>(this object o) => (T)o;
 
-    internal static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
-    {
-        var seenKeys = new HashSet<TKey>();
-        return source.Where(element => seenKeys.Add(keySelector(element)));
-    }
-
     internal static IEnumerable<T> FlattenByStack<T>(this IEnumerable<T> items, Func<T, IEnumerable<T>?>? getChildren)
     {
         var stack = new Stack<T>();

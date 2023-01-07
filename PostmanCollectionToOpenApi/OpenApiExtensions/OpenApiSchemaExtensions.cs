@@ -175,7 +175,7 @@
                                 Type = "object",
                                 Example = string.IsNullOrEmpty(parentText)
                                     ? null
-                                    : JToken.Parse(parentText!).ToOpenApiObject()
+                                    : JToken.Parse(parentText).ToOpenApiObject()
                             };
                             currentSchema.Properties.Add(name, objectSchema);
                             currentSchema = objectSchema;
