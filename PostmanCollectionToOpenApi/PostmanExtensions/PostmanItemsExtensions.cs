@@ -83,8 +83,7 @@ public static class PostmanItemsExtensions
         if (postmanItems.Response == null) throw new ArgumentNullException(nameof(postmanItems));
 
         var result = new OpenApiResponses();
-
-        return result;
+        return postmanItems.Response.Count > 0 ? postmanItems.Response.ToOpenApiResponses(variables) : result;
     }
 
     public static Dictionary<string, List<PostmanItems>> GetRequestPathKeys(this IEnumerable<PostmanItems> postmanItems, Dictionary<string, string>? variables)
